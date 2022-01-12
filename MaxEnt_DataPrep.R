@@ -8,10 +8,22 @@
 # 4 Resample and extend your data using the parameters from step 2
 # 5 Write your data out into a .asc format
 
+#Predictor Files Used for MaxExt SEI (Southern Southeast Inside waters) - Yelloweye were:
+# *bathy_SEI.....................bathymetry data for depth                            
+# *BPI_SEI.......................bathymetric position index
+# *mean_chlorophyll_SEI..........chlorophyll levels
+# *slope_SEI.....................slope
+# *mean_eastward_vel_50m_SEI.....Eastbound water velocity at 50 meters depth
+# *mean_northward_vel_50m_SEI....Northbound water velocity at 50 meters depth
+# *ruggedness_SEI................terrain ruggedness
+# *aspect_SEI....................aspect
+
+
 # 1 Set up your R packages and libraries######################################
 
 # install necessary packages and libraries
 install.packages("raster")
+install.packages("rgeos")
 install.packages("rgdal")
 install.packages("sf")
 install.packages("tidyverse")
@@ -24,7 +36,7 @@ library(rgeos)
 library(scales)
 library(fasterize)
 
-setwd("D:/Predictors")
+setwd("E:/MaxEnt Files") #Slim champagne colored external hard drive
 
 # 2 Set up some parameters you'll use to make your data uniform#######################
 
@@ -41,7 +53,7 @@ ext <- extent(-140, -133, 54, 60)
 #with. Let's take a look at the full code for reading in and manipulating the 
 #elevation data, and then break it down.
 
-#Process for Environmental Variable 1 - Elevation
+#Process for Environmental Variable 1 - Bathymetry
 
 # READ IN RASTER DATA
 #The first part of this script takes data from your computer and 
@@ -50,7 +62,7 @@ ext <- extent(-140, -133, 54, 60)
 #enclosed in quotes, as seen here. I use that data to create an R 
 #raster object called bath_raw.
 
-assign(paste0("bath_", "raw"), raster("bathy_extract.tif"))
+assign(paste0("bath_", "raw"), raster("bathy_SEI.tif"))
 
 # REPROJECT TO OUR SHARED PARAMETER
 
@@ -61,8 +73,10 @@ assign(paste0("bath_", "raw"), raster("bathy_extract.tif"))
 #between our elevation dataset's original extent and our chosen "ext" 
 #extent are filled in by NA values so that they do not distort the data.
 
-#____BATHY DATA##########################################################
-assign(paste0("bath_", "projected"),
+#____BATHY DATA##############################################################################
+assign(paste0("bath_", "raw"), raster("bathy_SEI.tif"))
+
+assign(paste0("bath_", "projected"), 
        projectRaster(bath_raw, crs=projection))
 
 # create variable equal to final raster
@@ -71,8 +85,8 @@ assign(paste0("bath_final"), bath_projected)
 # extend bath_final to the desired extent with NA values
 bath_extended <- extend(bath_final, ext, value=NA)
 
-#____ASPECT DATA##########################################################
-assign(paste0("aspect_", "raw"), raster("aspect.tif"))
+#____ASPECT DATA############################################################################
+assign(paste0("aspect_", "raw"), raster("aspect_SEI.tif"))
 
 assign(paste0("aspect_", "projected"),
        projectRaster(aspect_raw, crs=projection))
@@ -83,8 +97,8 @@ assign(paste0("aspect_final"), aspect_projected)
 # extend bath_final to the desired extent with NA values
 aspect_extended <- extend(aspect_final, ext, value=NA)
 
-#____BPI DATA##########################################################
-assign(paste0("BPI_", "raw"), raster("BPI_Extract.tif"))
+#____BPI DATA#################################################################################
+assign(paste0("BPI_", "raw"), raster("BPI_SEI.tif"))
 
 assign(paste0("BPI_", "projected"),
        projectRaster(BPI_raw, crs=projection))
@@ -95,8 +109,8 @@ assign(paste0("BPI_final"), BPI_projected)
 # extend bath_final to the desired extent with NA values
 BPI_extended <- extend(BPI_final, ext, value=NA)
 
-#____Chlorophyll DATA##########################################################
-assign(paste0("chlorophyll_", "raw"), raster("chlorophyll_resampled_extract2.tif"))
+#____Chlorophyll DATA##########################################################################
+assign(paste0("chlorophyll_", "raw"), raster("mean_chlorophyll_SEI.tif"))
 
 assign(paste0("chlorophyll_", "projected"),
        projectRaster(chlorophyll_raw, crs=projection))
@@ -107,8 +121,8 @@ assign(paste0("chlorophyll_final"), chlorophyll_projected)
 # extend bath_final to the desired extent with NA values
 chlorophyll_extended <- extend(chlorophyll_final, ext, value=NA)
 
-#____RUGGEDNESS (VRM) DATA##########################################################
-assign(paste0("VRM_", "raw"), raster("Ruggedness_Extract.tif"))
+#____RUGGEDNESS (VRM) DATA#####################################################################
+assign(paste0("VRM_", "raw"), raster("ruggedness_SEI.tif"))
 
 assign(paste0("VRM_", "projected"),
        projectRaster(VRM_raw, crs=projection))
@@ -119,8 +133,8 @@ assign(paste0("VRM_final"), VRM_projected)
 # extend bath_final to the desired extent with NA values
 VRM_extended <- extend(VRM_final, ext, value=NA)
 
-#____SLOPE DATA##########################################################
-assign(paste0("Slope_", "raw"), raster("Slope.tif"))
+#____SLOPE DATA################################################################################
+assign(paste0("Slope_", "raw"), raster("slope_SEI.tif"))
 
 assign(paste0("Slope_", "projected"),
        projectRaster(Slope_raw, crs=projection))
@@ -131,17 +145,30 @@ assign(paste0("slope_final"), Slope_projected)
 # extend bath_final to the desired extent with NA values
 Slope_extended <- extend(slope_final, ext, value=NA)
 
-#____SALINITY DATA##########################################################
-assign(paste0("Salinity_", "raw"), raster("Salinity_Resample_Bilinear_2.tif"))
+#____Northward Water Velocity 50 m DATA##########################################################
+assign(paste0("Nvelocity50m_", "raw"), raster("mean_northward_vel_50m_SEI.tif"))
 
-assign(paste0("Salinity_", "projected"),
-       projectRaster(Salinity_raw, crs=projection))
+assign(paste0("Nvelocity50m_", "projected"),
+       projectRaster(Nvelocity50m_raw, crs=projection))
 
 # create variable equal to final raster
-assign(paste0("salinity_final"), Salinity_projected)
+assign(paste0("Nvelocity50m_final"), Nvelocity50m_projected)
 
 # extend bath_final to the desired extent with NA values
-Salinity_extended <- extend(salinity_final, ext, value=NA)
+Nvelocity50m_extended <- extend(Nvelocity50m_final, ext, value=NA)
+
+#____Eastward Water Velocity 50 m DATA##########################################################
+assign(paste0("Evelocity50m_", "raw"), raster("mean_eastward_vel_50m_SEI.tif"))
+
+assign(paste0("Evelocity50m_", "projected"),
+       projectRaster(Evelocity50m_raw, crs=projection))
+
+# create variable equal to final raster
+assign(paste0("Evelocity50m_final"), Evelocity50m_projected)
+
+# extend bath_final to the desired extent with NA values
+Evelocity50m_extended <- extend(Evelocity50m_final, ext, value=NA)
+
 
 #BREAK############################################################################
 #>>VECTOR FORMAT##############
@@ -188,11 +215,13 @@ slope_final_re <- resample(slope_final, bath_final)
 
 chloro_final_re <- resample(chlorophyll_final, bath_final)
 
-salinity_final_re <- resample(salinity_final, bath_final)
+Nvelocity50_final_re <- resample(Nvelocity50m_final, bath_final)
+
+Evelocity50_final_re <- resample(Evelocity50m_final, bath_final)
 
 BPI_final_re <- resample(BPI_final, bath_final)
 
-VRM_final_re <- resample(VRM_final, bath_final)
+rugosity_final_re <- resample(VRM_final, bath_final)
 
 #Next, we have to re-extend the datasets to make sure that their 
 #shared extent was not influenced by the resampling.
@@ -205,15 +234,17 @@ slope_tend <- extend(slope_final_re, ext, value=NA)
 
 chloro_tend <- extend(chloro_final_re, ext, value=NA)
 
-salinity_tend <- extend(salinity_final_re, ext, value=NA)
+Nvelocity50_tend <- extend(Nvelocity50_final_re, ext, value=NA)
+
+Evelocity50_tend <- extend(Evelocity50_final_re, ext, value=NA)
 
 BPI_tend <- extend(BPI_final_re, ext, value=NA)
 
-VRM_tend <- extend(VRM_final_re, ext, value=NA)
+rugosity_tend <- extend(rugosity_final_re, ext, value=NA)
 
 # 5 Write your data out into a .asc format######################################
 
-#Now we have five datasets that are identical in extent, resolution, 
+#Now we have eight datasets that are identical in extent, resolution, 
 #and many other properties. Our final step is to write out these 
 #environmental datasets into the .asc format that the MaxEnt GUI uses.
 
@@ -225,8 +256,10 @@ writeRaster(slope_tend, filename="slope.asc", format="ascii", overwrite=TRUE)
 
 writeRaster(chloro_tend, filename="chloro.asc", format="ascii", overwrite=TRUE)
 
-writeRaster(salinity_tend, filename="salinity.asc", format="ascii", overwrite=TRUE)
+writeRaster(Nvelocity50_tend, filename="Nvelocity50.asc", format="ascii", overwrite=TRUE)
+
+writeRaster(Evelocity50_tend, filename="Evelocity50.asc", format="ascii", overwrite=TRUE)
 
 writeRaster(BPI_tend, filename="BPI.asc", format="ascii", overwrite=TRUE)
 
-writeRaster(VRM_tend, filename="VRM.asc", format="ascii", overwrite=TRUE)
+writeRaster(rugosity_tend, filename="rugosity.asc", format="ascii", overwrite=TRUE)
